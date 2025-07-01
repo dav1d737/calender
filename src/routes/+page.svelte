@@ -220,14 +220,13 @@
         <div class="container mx-auto px-4 py-6">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-2">
-                    <i class="fas fa-hands text-3xl text-indigo-300"></i>
-                    <h1 class="text-2xl font-bold">Zen Shiatsu</h1>
+                    <i class="fas fa-spa text-3xl text-indigo-300"></i>
+                    <h1 class="text-2xl font-bold">Shiatsu</h1>
                 </div>
                 <nav class="hidden md:flex space-x-6">
                     <a href="#" class="hover:text-indigo-300 transition">Home</a>
-                    <a href="#" class="hover:text-indigo-300 transition">Services</a>
-                    <a href="#" class="hover:text-indigo-300 transition">About</a>
-                    <a href="#" class="hover:text-indigo-300 transition">Contact</a>
+                    <a href="#" class="hover:text-indigo-300 transition">Booking</a>
+                    <a href="#" class="hover:text-indigo-300 transition">Impressum</a>
                 </nav>
                 <button class="md:hidden text-2xl">
                     <i class="fas fa-bars"></i>
@@ -237,14 +236,14 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="bg-gradient-to-r from-indigo-800 to-purple-700 text-white py-16">
-        <div class="container mx-auto px-4 text-center">
+    <section class="bg-gray-100 py-16">
+       <!-- <div class="container mx-auto px-4 text-center">
             <h2 class="text-4xl font-bold mb-4">Experience Deep Healing</h2>
             <p class="text-xl mb-8 max-w-2xl mx-auto">Book your personalized shiatsu massage session and restore balance to your body and mind.</p>
             <button class="bg-white text-indigo-800 font-bold px-6 py-3 rounded-full hover:bg-indigo-100 transition">
                 Book Now
             </button>
-        </div>
+        </div>-->
     </section>
 
 
@@ -252,7 +251,7 @@
 
 
 
-<section class="py-12">
+<section class="bg-gray-100 py-12">
   <div class="container mx-auto px-4">
     <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
       <div class="md:flex">
@@ -424,8 +423,8 @@
 
 
     <!-- Services Section -->
-    <section class="py-12 bg-gray-100">
-        <div class="container mx-auto px-4">
+    <section class="py-40 bg-gray-100">
+       <!-- <div class="container mx-auto px-4">
             <h2 class="text-3xl font-bold text-center mb-12">Our Shiatsu Services</h2>
             <div class="grid md:grid-cols-3 gap-8">
                 <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
@@ -453,12 +452,12 @@
                     <p class="mt-4 font-bold text-indigo-700">$95</p>
                 </div>
             </div>
-        </div>
+        </div>-->
     </section>
 
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-12">
-        <div class="container mx-auto px-4">
+        <!--<div class="container mx-auto px-4">
             <div class="grid md:grid-cols-4 gap-8">
                 <div>
                     <h4 class="text-xl font-bold mb-4">Zen Shiatsu</h4>
@@ -506,7 +505,7 @@
                     <p class="mt-4 text-gray-400 text-sm">© 2023 Zen Shiatsu. All rights reserved.</p>
                 </div>
             </div>
-        </div>
+        </div>-->
     </footer>
 
 <style>
