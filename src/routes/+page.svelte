@@ -1,5 +1,3 @@
-
-
 <script lang="ts">
   interface Booking {
     id: number;
@@ -78,29 +76,35 @@
     const startDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
     const days = [];
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); // Setzt die Uhrzeit auf Mitternacht für den Vergleich
 
+    // Tage des Vormonats
     for (let i = 0; i < startDayOfWeek; i++) {
       const day = new Date(year, month, i - startDayOfWeek + 1);
-      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false });
+      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false, isPast: true });
     }
 
+    // Tage des aktuellen Monats
     for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
       const day = new Date(year, month, i);
+      day.setHours(0, 0, 0, 0); // Setzt die Uhrzeit auf Mitternacht für den Vergleich
       const hasBookings = bookingDatesSet.has(toYYYYMMDD(day));
+      const isPast = day.getTime() < today.getTime(); // Überprüfen, ob der Tag in der Vergangenheit liegt
       days.push({
         date: day,
         dayOfMonth: i,
         isCurrentMonth: true,
         isToday: day.getTime() === today.getTime(),
-        hasBookings: hasBookings
+        hasBookings: hasBookings,
+        isPast: isPast
       });
     }
 
+    // Tage des nächsten Monats
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
       const day = new Date(year, month + 1, i);
-      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false });
+      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false, isPast: false }); // Zukünftige Tage sind nicht in der Vergangenheit
     }
 
     return days;
@@ -116,8 +120,9 @@
     selectedDate = null;
   }
 
-  function selectDay(day: { date: Date; isCurrentMonth: boolean }) {
-    if (!day.isCurrentMonth) return;
+  function selectDay(day: { date: Date; isCurrentMonth: boolean; isPast: boolean }) {
+    // Nur Tage im aktuellen Monat und zukünftige Tage/heute wählbar
+    if (!day.isCurrentMonth || day.isPast) return;
     selectedDate = day.date;
   }
 
@@ -126,6 +131,15 @@
       alert('Bitte wählen Sie zuerst ein Datum aus!');
       return;
     }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Setzt die Uhrzeit auf Mitternacht für den Vergleich
+    selectedDate.setHours(0, 0, 0, 0); // Setzt die Uhrzeit des ausgewählten Datums auf Mitternacht für den Vergleich
+
+    if (selectedDate.getTime() < today.getTime()) {
+      alert('Veraltete Tage können nicht gebucht werden.');
+      return;
+    }
+
     newBookingName = '';
     newBookingEmail = '';
     newBookingPhone = '';
@@ -142,13 +156,32 @@
   function addBooking() {
     bookingFormError = '';
     showSuccessAnimation = false;
+    showFailureAnimation = false; // Zurücksetzen der Fehlermeldungs-Animation
 
     if (!newBookingName || !newBookingEmail || !newBookingPhone || !newBookingTime) {
       bookingFormError = 'Bitte füllen Sie alle Felder aus.';
+      animationMessage = bookingFormError;
+      showFailureAnimation = true;
+      setTimeout(() => (showFailureAnimation = false), 3000);
       return;
     }
     if (!selectedDate) {
       bookingFormError = 'Es wurde kein Datum ausgewählt. Dies sollte nicht passieren.';
+      animationMessage = bookingFormError;
+      showFailureAnimation = true;
+      setTimeout(() => (showFailureAnimation = false), 3000);
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate.getTime() < today.getTime()) {
+      bookingFormError = 'Buchungen für veraltete Tage sind nicht erlaubt.';
+      animationMessage = bookingFormError;
+      showFailureAnimation = true;
+      setTimeout(() => (showFailureAnimation = false), 3000);
       return;
     }
 
@@ -161,7 +194,18 @@
       minutes
     );
 
-    // --- NEU: Kollisionsprüfung ---
+    // NEU: Zusätzliche Prüfung, ob die Buchungszeit in der Vergangenheit liegt (wenn der Tag heute ist)
+    const now = new Date();
+    if (newBookingDateTime.getTime() < now.getTime()) {
+      bookingFormError = 'Die ausgewählte Uhrzeit liegt in der Vergangenheit.';
+      animationMessage = bookingFormError;
+      showFailureAnimation = true;
+      setTimeout(() => (showFailureAnimation = false), 3000);
+      return;
+    }
+
+
+    // --- Kollisionsprüfung ---
     const newBookingTimeMillis = newBookingDateTime.getTime(); // Zeit der neuen Buchung in Millisekunden
 
     // Definiere den Zeitpuffer (1 Stunde vor und 1 Stunde nach der Buchung) in Millisekunden
@@ -180,17 +224,15 @@
     for (const existingBooking of bookingsOnSelectedDay) {
         const existingBookingTimeMillis = new Date(existingBooking.date).getTime();
 
-        // Prüfe, ob die neue Buchung in den Puffer einer bestehenden Buchung fällt
-        // Oder ob eine bestehende Buchung in den Puffer der neuen Buchung fällt
         const collision =
             (newBookingTimeMillis > existingBookingTimeMillis - oneHourInMillis &&
              newBookingTimeMillis < existingBookingTimeMillis + oneHourInMillis);
-            // Man könnte auch genauer definieren:
-            // newBookingStart < existingEnd && newBookingEnd > existingStart
-            // Für 1-Stunden-Blöcke ist die obere Prüfung einfacher und ausreichend, wenn nur die Startzeiten verglichen werden.
 
         if (collision) {
             bookingFormError = `Kollision: Für diesen Zeitpunkt existiert bereits eine Buchung oder ist innerhalb einer Stunde um eine bestehende Buchung (z.B. ${new Date(existingBooking.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr).`;
+            animationMessage = bookingFormError;
+            showFailureAnimation = true;
+            setTimeout(() => (showFailureAnimation = false), 3000);
             return; // Buchung nicht hinzufügen
         }
     }
@@ -207,15 +249,14 @@
     bookings = [...bookings, newBooking];
     bookings.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-     hideBookingForm(); // Modal schließen
-    // --- NEU: Erfolgsanimation anzeigen ---
+    hideBookingForm(); // Modal schließen
+    // --- Erfolgsanimation anzeigen ---
     animationMessage = 'Buchung erfolgreich hinzugefügt!';
     showSuccessAnimation = true;
     setTimeout(() => (showSuccessAnimation = false), 3000); // 3 Sekunden anzeigen
   }
-  
+
 </script>
-    <!-- Header -->
     <header class="bg-indigo-900 text-white shadow-lg">
         <div class="container mx-auto px-4 py-6">
             <div class="flex justify-between items-center">
@@ -235,16 +276,8 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
     <section class="bg-gray-100 py-16">
-       <!-- <div class="container mx-auto px-4 text-center">
-            <h2 class="text-4xl font-bold mb-4">Experience Deep Healing</h2>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">Book your personalized shiatsu massage session and restore balance to your body and mind.</p>
-            <button class="bg-white text-indigo-800 font-bold px-6 py-3 rounded-full hover:bg-indigo-100 transition">
-                Book Now
-            </button>
-        </div>-->
-    </section>
+        </section>
 
 
 
@@ -276,17 +309,18 @@
               <button
                 on:click={() => selectDay(day)}
                 class="relative text-center py-2 rounded-full transition-colors duration-200"
-                class:text-gray-400={!day.isCurrentMonth}
-                class:hover:bg-indigo-100={day.isCurrentMonth && selectedDate?.getTime() !== day.date.getTime()}
+                class:text-gray-400={!day.isCurrentMonth || day.isPast}
+                class:cursor-not-allowed={!day.isCurrentMonth || day.isPast}
+                class:hover:bg-indigo-100={day.isCurrentMonth && !day.isPast && selectedDate?.getTime() !== day.date.getTime()}
                 class:bg-indigo-600={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
                 class:text-white={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
-                class:hover:bg-indigo-700={day.isToday}
+                class:hover:bg-indigo-700={day.isToday && !day.isPast}
                 class:bg-indigo-800={selectedDate?.getTime() === day.date.getTime()}
                 class:text-gray-200={selectedDate?.getTime() === day.date.getTime()}
-                disabled={!day.isCurrentMonth}
+                disabled={!day.isCurrentMonth || day.isPast}
               >
                 {day.dayOfMonth}
-                {#if day.hasBookings && day.isCurrentMonth}
+                {#if day.hasBookings && day.isCurrentMonth && !day.isPast}
                   <span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-green-400 rounded-full"></span>
                 {/if}
               </button>
@@ -418,98 +452,21 @@
     {animationMessage}
   </div>
 {/if}
+{#if showFailureAnimation}
+  <div class="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl bg-red-500 text-white fade-in-out">
+    {animationMessage}
+  </div>
+{/if}
 
-    
 
-
-    <!-- Services Section -->
     <section class="py-40 bg-gray-100">
-       <!-- <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12">Our Shiatsu Services</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-spa"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Traditional Shiatsu</h3>
-                    <p class="text-gray-600">60-minute session focusing on energy meridians to restore balance and relieve tension.</p>
-                    <p class="mt-4 font-bold text-indigo-700">$85</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-leaf"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Deep Tissue Shiatsu</h3>
-                    <p class="text-gray-600">90-minute intensive session targeting deep muscle layers and chronic tension areas.</p>
-                    <p class="mt-4 font-bold text-indigo-700">$120</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-water"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Aromatherapy Shiatsu</h3>
-                    <p class="text-gray-600">75-minute session combining essential oils with pressure techniques for complete relaxation.</p>
-                    <p class="mt-4 font-bold text-indigo-700">$95</p>
-                </div>
-            </div>
-        </div>-->
-    </section>
+        </section>
 
-    <!-- Footer -->
     <footer class="bg-gray-900 text-white py-12">
-        <!--<div class="container mx-auto px-4">
-            <div class="grid md:grid-cols-4 gap-8">
-                <div>
-                    <h4 class="text-xl font-bold mb-4">Zen Shiatsu</h4>
-                    <p class="text-gray-400">Restoring balance through traditional Japanese healing techniques.</p>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Home</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Book Appointment</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Services</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">About Us</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
-                    <ul class="space-y-2">
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2 text-indigo-400"></i>
-                            <span class="text-gray-400">123 Healing Way, Serenity City</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-phone mr-2 text-indigo-400"></i>
-                            <span class="text-gray-400">(555) 123-4567</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope mr-2 text-indigo-400"></i>
-                            <span class="text-gray-400">contact@zenshiatsu.com</span>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition text-xl">
-                            <i class="fab fa-facebook"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition text-xl">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition text-xl">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                    </div>
-                    <p class="mt-4 text-gray-400 text-sm">© 2023 Zen Shiatsu. All rights reserved.</p>
-                </div>
-            </div>
-        </div>-->
-    </footer>
+        </footer>
 
 <style>
-	.backgroundBuchungAktiv {
+  .backgroundBuchungAktiv {
     background-color: rgba(0, 0, 0, 0.4);
   }
 

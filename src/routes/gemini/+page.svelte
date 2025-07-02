@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import Flower from "../flower/+page.svelte";
+   import Calendar from "../calendar/+page.svelte";
   interface Booking {
     id: number;
     name: string;
@@ -241,81 +242,7 @@
 
 
   <section class="py-12 bg-gray-50">
-    <div class="container mx-auto px-4">
-      <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-        <div class="md:flex">
-          <div class="md:w-1/2 p-6 border-r border-gray-200">
-            <h3 class="text-2xl font-heading text-gray-800 mb-6">Wähle ein Datum</h3>
-            <div class="flex justify-between items-center mb-4">
-              <button on:click={goToPrevMonth} class="text-gray-600 hover:text-teal-700"> &lt; </button>
-              <h4 class="text-xl font-semibold text-gray-800">{monthYearDisplay}</h4>
-              <button on:click={goToNextMonth} class="text-gray-600 hover:text-teal-700"> &gt; </button>
-            </div>
-            <div class="grid grid-cols-7 gap-2 mb-4">
-              <div class="text-center font-medium text-gray-500 text-sm">Mo</div>
-              <div class="text-center font-medium text-gray-500 text-sm">Di</div>
-              <div class="text-center font-medium text-gray-500 text-sm">Mi</div>
-              <div class="text-center font-medium text-gray-500 text-sm">Do</div>
-              <div class="text-center font-medium text-gray-500 text-sm">Fr</div>
-              <div class="text-center font-medium text-gray-500 text-sm">Sa</div>
-              <div class="text-center font-medium text-gray-500 text-sm">So</div>
-            </div>
-            <div class="grid grid-cols-7 gap-2">
-              {#each calendarDays as day}
-                <button
-                  on:click={() => selectDay(day)}
-                  class="relative text-center py-2 rounded-full transition-colors duration-200"
-                  class:text-gray-400={!day.isCurrentMonth}
-                  class:hover:bg-teal-100={day.isCurrentMonth && selectedDate?.getTime() !== day.date.getTime()}
-                  class:bg-teal-500={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
-                  class:text-white={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
-                  class:hover:bg-teal-600={day.isToday}
-                  class:bg-teal-700={selectedDate?.getTime() === day.date.getTime()}
-                  class:text-gray-100={selectedDate?.getTime() === day.date.getTime()}
-                  disabled={!day.isCurrentMonth}
-                >
-                  {day.dayOfMonth}
-                  {#if day.hasBookings && day.isCurrentMonth}
-                    <span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
-                  {/if}
-                </button>
-              {/each}
-            </div>
-          </div>
-
-          <div class="md:w-1/2 p-6">
-            {#if selectedDate}
-              <h3 class="text-2xl font-heading text-gray-800 mb-6">
-                Buchungen für den {selectedDate.toLocaleDateString('de-DE')}
-              </h3>
-              <div class="space-y-3">
-                {#if bookingsForSelectedDate.length > 0}
-                  {#each bookingsForSelectedDate as booking}
-                    <div class="bg-gray-100 p-3 rounded-lg border border-gray-200">
-                      <p class="font-semibold text-gray-800">{booking.name}</p>
-                      <p class="text-sm text-gray-600">
-                        Uhrzeit: {new Date(booking.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
-                      </p>
-                      <p class="text-sm text-gray-600">E-Mail: {booking.email}</p>
-                      <p class="text-sm text-gray-600">Tel: {booking.phone}</p>
-                    </div>
-                  {/each}
-                {:else}
-                  <p class="text-gray-500">Für diesen Tag gibt es keine Buchungen.</p>
-                {/if}
-
-                <button on:click={showBookingForm} class="bg-teal-500 text-white p-3 rounded-lg mt-4 w-full hover:bg-teal-600 transition shadow">
-                  Neue Buchung hinzufügen
-                </button>
-              </div>
-            {:else}
-              <h3 class="text-2xl font-heading text-gray-800 mb-6">Verfügbare Zeiten</h3>
-              <p class="text-gray-500">Wähle ein Datum, um die Buchungen zu sehen oder eine neue Buchung zu starten.</p>
-            {/if}
-          </div>
-        </div>
-      </div>
-    </div>
+    <Calendar></Calendar>
   </section>
 
   {#if isBookingFormVisible}
