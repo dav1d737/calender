@@ -48,7 +48,7 @@
   ]);
 
   let currentDate = new Date();
-  let selectedDate: Date | null = null;
+  let selectedDate: Date | null = new Date();
 
   let newBookingName: string = '';
   let newBookingEmail: string = '';
