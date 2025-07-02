@@ -3,6 +3,7 @@
 <script lang="ts">
   import Flower from "../slider/+page.svelte";
    import Calendar from "../calendar/+page.svelte";
+    import Navigation from "../navigation/+page.svelte";
   interface Booking {
     id: number;
     name: string;
@@ -222,22 +223,7 @@
 
 <div class="font-body text-base leading-relaxed text-gray-800">
   <header class="bg-gray-800 text-white shadow-lg">
-    <div class="container mx-auto px-4 py-6">
-      <div class="flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-          <i class="fas fa-regular fa-spa text-teal-300"></i>
-          <h1 class="text-2xl font-heading font-bold">Shiatsu</h1>
-        </div>
-        <nav class="hidden md:flex space-x-6">
-          <a href="./home" class="hover:text-teal-300 transition">Startseite</a>
-          <a href="./booking" class="hover:text-teal-300 transition">Buchungen</a>
-          <a href="./about" class="hover:text-teal-300 transition">Impressum</a>
-        </nav>
-        <button class="md:hidden text-2xl">
-          <i class="fas fa-bars"></i>
-        </button>
-      </div>
-    </div>
+    <Navigation></Navigation>
   </header>
 
  <section class="py-40 bg-gray-50">
