@@ -13,7 +13,7 @@
   </header>
 
 
-<section class="py-12 bg-gray-50">
+<section class="py-30 bg-gray-50 zindex">
     <Slider></Slider>
 </section>
 
@@ -182,5 +182,8 @@ Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie co
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  .zindex{
+    z-index: 999;
   }
 </style>

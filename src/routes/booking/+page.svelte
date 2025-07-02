@@ -16,7 +16,7 @@
   </header>
 
 
-  <section class="py-12 bg-gray-50">
+  <section class="py-30 bg-gray-50">
     <Calendar></Calendar>
   </section>
 
