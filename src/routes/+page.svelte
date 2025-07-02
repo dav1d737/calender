@@ -1,9 +1,9 @@
 
 <script lang="ts">
-  import Flower from "../slider/+page.svelte";
-   import Calendar from "../calendar/+page.svelte";
+  import Flower from "./slider/+page.svelte";
+   import Calendar from "./calendar/+page.svelte";
    
-   import Navigation from "../navigation/+page.svelte";
+   import Navigation from "./navigation/+page.svelte";
   
 
 </script>
