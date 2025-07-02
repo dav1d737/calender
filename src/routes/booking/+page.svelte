@@ -1,6 +1,8 @@
 
 
 <script lang="ts">
+  import Flower from "../slider/+page.svelte";
+   import Calendar from "../calendar/+page.svelte";
   interface Booking {
     id: number;
     name: string;
@@ -171,9 +173,9 @@
     const bookingsOnSelectedDay = bookings.filter((booking) => {
         const existingBookingDate = new Date(booking.date);
         return (
-            existingBookingDate.getFullYear() === selectedDate!.getFullYear() &&
-            existingBookingDate.getMonth() === selectedDate!.getMonth() &&
-            existingBookingDate.getDate() === selectedDate!.getDate()
+          existingBookingDate.getFullYear() === selectedDate!.getFullYear() &&
+          existingBookingDate.getMonth() === selectedDate!.getMonth() &&
+          existingBookingDate.getDate() === selectedDate!.getDate()
         );
     });
 
@@ -207,7 +209,7 @@
     bookings = [...bookings, newBooking];
     bookings.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-     hideBookingForm(); // Modal schließen
+      hideBookingForm(); // Modal schließen
     // --- NEU: Erfolgsanimation anzeigen ---
     animationMessage = 'Buchung erfolgreich hinzugefügt!';
     showSuccessAnimation = true;
@@ -215,302 +217,188 @@
   }
   
 </script>
-    <!-- Header -->
-    <header class="bg-indigo-900 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-hands text-3xl text-indigo-300"></i>
-                    <h1 class="text-2xl font-bold">Zen Shiatsu</h1>
-                </div>
-                <nav class="hidden md:flex space-x-6">
-                    <a href="#" class="hover:text-indigo-300 transition">Home</a>
-                    <a href="#" class="hover:text-indigo-300 transition">Services</a>
-                    <a href="#" class="hover:text-indigo-300 transition">About</a>
-                    <a href="#" class="hover:text-indigo-300 transition">Contact</a>
-                </nav>
-                <button class="md:hidden text-2xl">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="font-body text-base leading-relaxed text-gray-800">
+  <header class="bg-gray-800 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-regular fa-spa text-teal-300"></i>
+          <h1 class="text-2xl font-heading font-bold">Shiatsu</h1>
         </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="bg-gradient-to-r from-indigo-800 to-purple-700 text-white py-16">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-4xl font-bold mb-4">Experience Deep Healing</h2>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">Book your personalized shiatsu massage session and restore balance to your body and mind.</p>
-            <button class="bg-white text-indigo-800 font-bold px-6 py-3 rounded-full hover:bg-indigo-100 transition">
-                Book Now
-            </button>
-        </div>
-    </section>
-
-
-
-
-
-
-<section class="py-12">
-  <div class="container mx-auto px-4">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-      <div class="md:flex">
-        <div class="md:w-1/2 p-6 border-r border-gray-200">
-          <h3 class="text-2xl font-bold text-gray-800 mb-6">Wähle ein Datum</h3>
-          <div class="flex justify-between items-center mb-4">
-            <button on:click={goToPrevMonth} class="text-gray-600 hover:text-indigo-700"> &lt; </button>
-            <h4 class="text-xl font-semibold text-gray-800">{monthYearDisplay}</h4>
-            <button on:click={goToNextMonth} class="text-gray-600 hover:text-indigo-700"> &gt; </button>
-          </div>
-          <div class="grid grid-cols-7 gap-2 mb-4">
-            <div class="text-center font-medium text-gray-500 text-sm">Mo</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Di</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Mi</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Do</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Fr</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Sa</div>
-            <div class="text-center font-medium text-gray-500 text-sm">So</div>
-          </div>
-          <div class="grid grid-cols-7 gap-2">
-            {#each calendarDays as day}
-              <button
-                on:click={() => selectDay(day)}
-                class="relative text-center py-2 rounded-full transition-colors duration-200"
-                class:text-gray-400={!day.isCurrentMonth}
-                class:hover:bg-indigo-100={day.isCurrentMonth && selectedDate?.getTime() !== day.date.getTime()}
-                class:bg-indigo-600={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
-                class:text-white={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
-                class:hover:bg-indigo-700={day.isToday}
-                class:bg-indigo-800={selectedDate?.getTime() === day.date.getTime()}
-                class:text-gray-200={selectedDate?.getTime() === day.date.getTime()}
-                disabled={!day.isCurrentMonth}
-              >
-                {day.dayOfMonth}
-                {#if day.hasBookings && day.isCurrentMonth}
-                  <span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                {/if}
-              </button>
-            {/each}
-          </div>
-        </div>
-
-        <div class="md:w-1/2 p-6">
-          {#if selectedDate}
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">
-              Buchungen für den {selectedDate.toLocaleDateString('de-DE')}
-            </h3>
-            <div class="space-y-3">
-              {#if bookingsForSelectedDate.length > 0}
-                {#each bookingsForSelectedDate as booking}
-                  <div class="bg-gray-100 p-3 rounded-lg">
-                    <p class="font-semibold text-gray-800">{booking.name}</p>
-                    <p class="text-sm text-gray-600">
-                      Uhrzeit: {new Date(booking.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
-                    </p>
-                    <p class="text-sm text-gray-600">E-Mail: {booking.email}</p>
-                    <p class="text-sm text-gray-600">Tel: {booking.phone}</p>
-                  </div>
-                {/each}
-              {:else}
-                <p class="text-gray-500">Für diesen Tag gibt es keine Buchungen.</p>
-              {/if}
-
-              <button on:click={showBookingForm} class="bg-indigo-700 text-white p-3 rounded-lg mt-4 w-full">
-                Neue Buchung hinzufügen
-              </button>
-            </div>
-          {:else}
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">Verfügbare Zeiten</h3>
-            <p class="text-gray-500">Wähle ein Datum, um die Buchungen zu sehen oder eine neue Buchung zu starten.</p>
-          {/if}
-        </div>
+        <nav class="hidden md:flex space-x-6">
+          <a href="./home" class="hover:text-teal-300 transition">Startseite</a>
+          <a href="./booking" class="hover:text-teal-300 transition">Buchungen</a>
+          <a href="./about" class="hover:text-teal-300 transition">Impressum</a>
+        </nav>
+        <button class="md:hidden text-2xl">
+          <i class="fas fa-bars"></i>
+        </button>
       </div>
     </div>
-  </div>
-</section>
+  </header>
 
-{#if isBookingFormVisible}
-  <div
-    on:click={hideBookingForm}
-    class="backgroundBuchungAktiv fixed inset-0 flex justify-center items-center z-40"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div on:click|stopPropagation class="relative bg-white rounded-xl shadow-lg p-8 m-4 max-w-lg w-full z-50">
-      <h3 class="text-2xl font-bold text-gray-800 mb-6">Buchung abschließen</h3>
-      {#if selectedDate}
-        <p class="text-gray-700 mb-4">
-          Ausgewähltes Datum: <span class="font-semibold">{selectedDate.toLocaleDateString('de-DE')}</span>
-        </p>
-      {/if}
 
-      {#if bookingFormError}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong class="font-bold">Fehler!</strong>
-          <span class="block sm:inline">{bookingFormError}</span>
-        </div>
-      {/if}
+  <section class="py-12 bg-gray-50">
+    <Calendar></Calendar>
+  </section>
 
-      <form on:submit|preventDefault={addBooking}>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="time">Uhrzeit</label>
-          <select
-            id="time"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingTime}
-          >
-            {#each availableTimes as time}
-              <option value={time}>{time}</option>
-            {/each}
-          </select>
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="name">Vollständiger Name</label>
-          <input
-            type="text"
-            id="name"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingName}
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="email">E-Mail</label>
-          <input
-            type="email"
-            id="email"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingEmail}
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="phone">Telefonnummer</label>
-          <input
-            type="tel"
-            id="phone"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingPhone}
-            required
-          />
-        </div>
-        <div class="flex justify-between mt-6">
-          <button
-            type="button"
-            on:click={hideBookingForm}
-            class="px-4 py-2 text-gray-600 hover:text-indigo-700"
-          >
-            Zurück
-          </button>
-          <button
-            type="submit"
-            class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
-          >
-            Buchung bestätigen
-          </button>
-        </div>
-      </form>
+  {#if isBookingFormVisible}
+    <div
+      on:click={hideBookingForm}
+      class="backgroundBuchungAktiv fixed inset-0 flex justify-center items-center z-40"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div on:click|stopPropagation class="relative bg-white rounded-xl shadow-lg p-8 m-4 max-w-lg w-full z-50">
+        <h3 class="text-2xl font-heading text-gray-800 mb-6">Buchung abschließen</h3>
+        {#if selectedDate}
+          <p class="text-gray-700 mb-4">
+            Ausgewähltes Datum: <span class="font-semibold">{selectedDate.toLocaleDateString('de-DE')}</span>
+          </p>
+        {/if}
+
+        {#if bookingFormError}
+          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Fehler!</strong>
+            <span class="block sm:inline">{bookingFormError}</span>
+          </div>
+        {/if}
+
+        <form on:submit|preventDefault={addBooking}>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" for="time">Uhrzeit</label>
+            <select
+              id="time"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              bind:value={newBookingTime}
+            >
+              {#each availableTimes as time}
+                <option value={time}>{time}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" for="name">Vollständiger Name</label>
+            <input
+              type="text"
+              id="name"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              bind:value={newBookingName}
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" for="email">E-Mail</label>
+            <input
+              type="email"
+              id="email"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              bind:value={newBookingEmail}
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" for="phone">Telefonnummer</label>
+            <input
+              type="tel"
+              id="phone"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              bind:value={newBookingPhone}
+              required
+            />
+          </div>
+          <div class="flex justify-between mt-6">
+            <button
+              type="button"
+              on:click={hideBookingForm}
+              class="px-4 py-2 text-gray-600 hover:text-teal-700"
+            >
+              Zurück
+            </button>
+            <button
+              type="submit"
+              class="bg-teal-500 text-white px-6 py-2 rounded-lg hover:bg-teal-600 transition shadow"
+            >
+              Buchung bestätigen
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-{/if}
-{#if showSuccessAnimation}
-  <div class="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl bg-green-500 text-white fade-in-out">
-    {animationMessage}
-  </div>
-{/if}
+  {/if}
+  {#if showSuccessAnimation}
+    <div class="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl bg-green-500 text-white fade-in-out">
+      {animationMessage}
+    </div>
+  {/if}
 
-    
+  <section class="py-40 bg-gray-50">
+    <div class="container mx-auto px-4">
+      
+    </div>
+  </section>
 
-
-    <!-- Services Section -->
-    <section class="py-12 bg-gray-100">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12">Our Shiatsu Services</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-spa"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Traditional Shiatsu</h3>
-                    <p class="text-gray-600">60-minute session focusing on energy meridians to restore balance and relieve tension.</p>
-                    <p class="mt-4 font-bold text-indigo-700">$85</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-leaf"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Deep Tissue Shiatsu</h3>
-                    <p class="text-gray-600">90-minute intensive session targeting deep muscle layers and chronic tension areas.</p>
-                    <p class="mt-4 font-bold text-indigo-700">$120</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-water"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Aromatherapy Shiatsu</h3>
-                    <p class="text-gray-600">75-minute session combining essential oils with pressure techniques for complete relaxation.</p>
-                    <p class="mt-4 font-bold text-indigo-700">$95</p>
-                </div>
-            </div>
+  <footer class="bg-gray-800 text-white py-10">
+    <!--<div class="container mx-auto px-4">
+      <div class="grid md:grid-cols-4 gap-8">
+        <div>
+          <h4 class="text-xl font-heading font-bold mb-4">Zen Shiatsu</h4>
+          <p class="text-gray-400">Restoring balance through traditional Japanese healing techniques.</p>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
-        <div class="container mx-auto px-4">
-            <div class="grid md:grid-cols-4 gap-8">
-                <div>
-                    <h4 class="text-xl font-bold mb-4">Zen Shiatsu</h4>
-                    <p class="text-gray-400">Restoring balance through traditional Japanese healing techniques.</p>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Home</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Book Appointment</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Services</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">About Us</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
-                    <ul class="space-y-2">
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2 text-indigo-400"></i>
-                            <span class="text-gray-400">123 Healing Way, Serenity City</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-phone mr-2 text-indigo-400"></i>
-                            <span class="text-gray-400">(555) 123-4567</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope mr-2 text-indigo-400"></i>
-                            <span class="text-gray-400">contact@zenshiatsu.com</span>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition text-xl">
-                            <i class="fab fa-facebook"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition text-xl">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition text-xl">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                    </div>
-                    <p class="mt-4 text-gray-400 text-sm">© 2023 Zen Shiatsu. All rights reserved.</p>
-                </div>
-            </div>
+        <div>
+          <h4 class="text-lg font-heading font-semibold mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Home</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Book Appointment</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Services</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">About Us</a></li>
+          </ul>
         </div>
-    </footer>
+        <div>
+          <h4 class="text-lg font-heading font-semibold mb-4">Contact</h4>
+          <ul class="space-y-2">
+            <li class="flex items-center">
+              <i class="fas fa-map-marker-alt mr-2 text-teal-400"></i>
+              <span class="text-gray-400">123 Healing Way, Serenity City</span>
+            </li>
+            <li class="flex items-center">
+              <i class="fas fa-phone mr-2 text-teal-400"></i>
+              <span class="text-gray-400">(555) 123-4567</span>
+            </li>
+            <li class="flex items-center">
+              <i class="fas fa-envelope mr-2 text-teal-400"></i>
+              <span class="text-gray-400">contact@zenshiatsu.com</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-lg font-heading font-semibold mb-4">Follow Us</h4>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white transition text-xl">
+              <i class="fab fa-facebook"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition text-xl">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition text-xl">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </div>
+          <p class="mt-4 text-gray-400 text-sm">© 2023 Zen Shiatsu. All rights reserved.</p>
+        </div>
+      </div>
+    </div>-->
+  </footer>
+</div>
 
 <style>
-	.backgroundBuchungAktiv {
+	.flower{
+		height: 30vh;
+	}
+  .backgroundBuchungAktiv {
     background-color: rgba(0, 0, 0, 0.4);
   }
 
@@ -556,20 +444,19 @@
       transform: translateX(100%);
     }
   }
-        .calendar-day:hover:not(.disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .time-slot:hover:not(.booked) {
-            background-color: #3b82f6;
-            color: white;
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  .calendar-day:hover:not(.disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .time-slot:hover:not(.booked) {
+    background-color: #2dd4bf; /* Tailwind teal-400 */
+    color: white;
+  }
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

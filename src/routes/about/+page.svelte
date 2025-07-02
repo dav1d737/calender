@@ -1,4 +1,8 @@
+
+
 <script lang="ts">
+  import Flower from "../slider/+page.svelte";
+   import Calendar from "../calendar/+page.svelte";
   interface Booking {
     id: number;
     name: string;
@@ -76,35 +80,29 @@
     const startDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
     const days = [];
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Setzt die Uhrzeit auf Mitternacht für den Vergleich
+    today.setHours(0, 0, 0, 0);
 
-    // Tage des Vormonats
     for (let i = 0; i < startDayOfWeek; i++) {
       const day = new Date(year, month, i - startDayOfWeek + 1);
-      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false, isPast: true });
+      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false });
     }
 
-    // Tage des aktuellen Monats
     for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
       const day = new Date(year, month, i);
-      day.setHours(0, 0, 0, 0); // Setzt die Uhrzeit auf Mitternacht für den Vergleich
       const hasBookings = bookingDatesSet.has(toYYYYMMDD(day));
-      const isPast = day.getTime() < today.getTime(); // Überprüfen, ob der Tag in der Vergangenheit liegt
       days.push({
         date: day,
         dayOfMonth: i,
         isCurrentMonth: true,
         isToday: day.getTime() === today.getTime(),
-        hasBookings: hasBookings,
-        isPast: isPast
+        hasBookings: hasBookings
       });
     }
 
-    // Tage des nächsten Monats
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
       const day = new Date(year, month + 1, i);
-      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false, isPast: false }); // Zukünftige Tage sind nicht in der Vergangenheit
+      days.push({ date: day, dayOfMonth: day.getDate(), isCurrentMonth: false, isToday: false, hasBookings: false });
     }
 
     return days;
@@ -120,9 +118,8 @@
     selectedDate = null;
   }
 
-  function selectDay(day: { date: Date; isCurrentMonth: boolean; isPast: boolean }) {
-    // Nur Tage im aktuellen Monat und zukünftige Tage/heute wählbar
-    if (!day.isCurrentMonth || day.isPast) return;
+  function selectDay(day: { date: Date; isCurrentMonth: boolean }) {
+    if (!day.isCurrentMonth) return;
     selectedDate = day.date;
   }
 
@@ -131,15 +128,6 @@
       alert('Bitte wählen Sie zuerst ein Datum aus!');
       return;
     }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Setzt die Uhrzeit auf Mitternacht für den Vergleich
-    selectedDate.setHours(0, 0, 0, 0); // Setzt die Uhrzeit des ausgewählten Datums auf Mitternacht für den Vergleich
-
-    if (selectedDate.getTime() < today.getTime()) {
-      alert('Veraltete Tage können nicht gebucht werden.');
-      return;
-    }
-
     newBookingName = '';
     newBookingEmail = '';
     newBookingPhone = '';
@@ -156,32 +144,13 @@
   function addBooking() {
     bookingFormError = '';
     showSuccessAnimation = false;
-    showFailureAnimation = false; // Zurücksetzen der Fehlermeldungs-Animation
 
     if (!newBookingName || !newBookingEmail || !newBookingPhone || !newBookingTime) {
       bookingFormError = 'Bitte füllen Sie alle Felder aus.';
-      animationMessage = bookingFormError;
-      showFailureAnimation = true;
-      setTimeout(() => (showFailureAnimation = false), 3000);
       return;
     }
     if (!selectedDate) {
       bookingFormError = 'Es wurde kein Datum ausgewählt. Dies sollte nicht passieren.';
-      animationMessage = bookingFormError;
-      showFailureAnimation = true;
-      setTimeout(() => (showFailureAnimation = false), 3000);
-      return;
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    selectedDate.setHours(0, 0, 0, 0);
-
-    if (selectedDate.getTime() < today.getTime()) {
-      bookingFormError = 'Buchungen für veraltete Tage sind nicht erlaubt.';
-      animationMessage = bookingFormError;
-      showFailureAnimation = true;
-      setTimeout(() => (showFailureAnimation = false), 3000);
       return;
     }
 
@@ -194,18 +163,7 @@
       minutes
     );
 
-    // NEU: Zusätzliche Prüfung, ob die Buchungszeit in der Vergangenheit liegt (wenn der Tag heute ist)
-    const now = new Date();
-    if (newBookingDateTime.getTime() < now.getTime()) {
-      bookingFormError = 'Die ausgewählte Uhrzeit liegt in der Vergangenheit.';
-      animationMessage = bookingFormError;
-      showFailureAnimation = true;
-      setTimeout(() => (showFailureAnimation = false), 3000);
-      return;
-    }
-
-
-    // --- Kollisionsprüfung ---
+    // --- NEU: Kollisionsprüfung ---
     const newBookingTimeMillis = newBookingDateTime.getTime(); // Zeit der neuen Buchung in Millisekunden
 
     // Definiere den Zeitpuffer (1 Stunde vor und 1 Stunde nach der Buchung) in Millisekunden
@@ -215,24 +173,26 @@
     const bookingsOnSelectedDay = bookings.filter((booking) => {
         const existingBookingDate = new Date(booking.date);
         return (
-            existingBookingDate.getFullYear() === selectedDate!.getFullYear() &&
-            existingBookingDate.getMonth() === selectedDate!.getMonth() &&
-            existingBookingDate.getDate() === selectedDate!.getDate()
+          existingBookingDate.getFullYear() === selectedDate!.getFullYear() &&
+          existingBookingDate.getMonth() === selectedDate!.getMonth() &&
+          existingBookingDate.getDate() === selectedDate!.getDate()
         );
     });
 
     for (const existingBooking of bookingsOnSelectedDay) {
         const existingBookingTimeMillis = new Date(existingBooking.date).getTime();
 
+        // Prüfe, ob die neue Buchung in den Puffer einer bestehenden Buchung fällt
+        // Oder ob eine bestehende Buchung in den Puffer der neuen Buchung fällt
         const collision =
             (newBookingTimeMillis > existingBookingTimeMillis - oneHourInMillis &&
              newBookingTimeMillis < existingBookingTimeMillis + oneHourInMillis);
+            // Man könnte auch genauer definieren:
+            // newBookingStart < existingEnd && newBookingEnd > existingStart
+            // Für 1-Stunden-Blöcke ist die obere Prüfung einfacher und ausreichend, wenn nur die Startzeiten verglichen werden.
 
         if (collision) {
             bookingFormError = `Kollision: Für diesen Zeitpunkt existiert bereits eine Buchung oder ist innerhalb einer Stunde um eine bestehende Buchung (z.B. ${new Date(existingBooking.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr).`;
-            animationMessage = bookingFormError;
-            showFailureAnimation = true;
-            setTimeout(() => (showFailureAnimation = false), 3000);
             return; // Buchung nicht hinzufügen
         }
     }
@@ -249,223 +209,217 @@
     bookings = [...bookings, newBooking];
     bookings.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    hideBookingForm(); // Modal schließen
-    // --- Erfolgsanimation anzeigen ---
+      hideBookingForm(); // Modal schließen
+    // --- NEU: Erfolgsanimation anzeigen ---
     animationMessage = 'Buchung erfolgreich hinzugefügt!';
     showSuccessAnimation = true;
     setTimeout(() => (showSuccessAnimation = false), 3000); // 3 Sekunden anzeigen
   }
-
+  
 </script>
-    <header class="bg-indigo-900 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-spa text-3xl text-indigo-300"></i>
-                    <h1 class="text-2xl font-bold">Shiatsu</h1>
-                </div>
-                <nav class="hidden md:flex space-x-6">
-                    <a href="#" class="hover:text-indigo-300 transition">Home</a>
-                    <a href="#" class="hover:text-indigo-300 transition">Booking</a>
-                    <a href="#" class="hover:text-indigo-300 transition">Impressum</a>
-                </nav>
-                <button class="md:hidden text-2xl">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="font-body text-base leading-relaxed text-gray-800">
+  <header class="bg-gray-800 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-regular fa-spa text-teal-300"></i>
+          <h1 class="text-2xl font-heading font-bold">Shiatsu</h1>
         </div>
-    </header>
-
-    <section class="bg-gray-100 py-16">
-        </section>
-
-
-
-
-
-
-<section class="bg-gray-100 py-12">
-  <div class="container mx-auto px-4">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-      <div class="md:flex">
-        <div class="md:w-1/2 p-6 border-r border-gray-200">
-          <h3 class="text-2xl font-bold text-gray-800 mb-6">Wähle ein Datum</h3>
-          <div class="flex justify-between items-center mb-4">
-            <button on:click={goToPrevMonth} class="text-gray-600 hover:text-indigo-700"> &lt; </button>
-            <h4 class="text-xl font-semibold text-gray-800">{monthYearDisplay}</h4>
-            <button on:click={goToNextMonth} class="text-gray-600 hover:text-indigo-700"> &gt; </button>
-          </div>
-          <div class="grid grid-cols-7 gap-2 mb-4">
-            <div class="text-center font-medium text-gray-500 text-sm">Mo</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Di</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Mi</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Do</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Fr</div>
-            <div class="text-center font-medium text-gray-500 text-sm">Sa</div>
-            <div class="text-center font-medium text-gray-500 text-sm">So</div>
-          </div>
-          <div class="grid grid-cols-7 gap-2">
-            {#each calendarDays as day}
-              <button
-                on:click={() => selectDay(day)}
-                class="relative text-center py-2 rounded-full transition-colors duration-200"
-                class:text-gray-400={!day.isCurrentMonth || day.isPast}
-                class:cursor-not-allowed={!day.isCurrentMonth || day.isPast}
-                class:hover:bg-indigo-100={day.isCurrentMonth && !day.isPast && selectedDate?.getTime() !== day.date.getTime()}
-                class:bg-indigo-600={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
-                class:text-white={day.isToday && selectedDate?.getTime() !== day.date.getTime()}
-                class:hover:bg-indigo-700={day.isToday && !day.isPast}
-                class:bg-indigo-800={selectedDate?.getTime() === day.date.getTime()}
-                class:text-gray-200={selectedDate?.getTime() === day.date.getTime()}
-                disabled={!day.isCurrentMonth || day.isPast}
-              >
-                {day.dayOfMonth}
-                {#if day.hasBookings && day.isCurrentMonth && !day.isPast}
-                  <span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                {/if}
-              </button>
-            {/each}
-          </div>
-        </div>
-
-        <div class="md:w-1/2 p-6">
-          {#if selectedDate}
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">
-              Buchungen für den {selectedDate.toLocaleDateString('de-DE')}
-            </h3>
-            <div class="space-y-3">
-              {#if bookingsForSelectedDate.length > 0}
-                {#each bookingsForSelectedDate as booking}
-                  <div class="bg-gray-100 p-3 rounded-lg">
-                    <p class="font-semibold text-gray-800">{booking.name}</p>
-                    <p class="text-sm text-gray-600">
-                      Uhrzeit: {new Date(booking.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
-                    </p>
-                    <p class="text-sm text-gray-600">E-Mail: {booking.email}</p>
-                    <p class="text-sm text-gray-600">Tel: {booking.phone}</p>
-                  </div>
-                {/each}
-              {:else}
-                <p class="text-gray-500">Für diesen Tag gibt es keine Buchungen.</p>
-              {/if}
-
-              <button on:click={showBookingForm} class="bg-indigo-700 text-white p-3 rounded-lg mt-4 w-full">
-                Neue Buchung hinzufügen
-              </button>
-            </div>
-          {:else}
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">Verfügbare Zeiten</h3>
-            <p class="text-gray-500">Wähle ein Datum, um die Buchungen zu sehen oder eine neue Buchung zu starten.</p>
-          {/if}
-        </div>
+        <nav class="hidden md:flex space-x-6">
+          <a href="./home" class="hover:text-teal-300 transition">Startseite</a>
+          <a href="./booking" class="hover:text-teal-300 transition">Buchungen</a>
+          <a href="./about" class="hover:text-teal-300 transition">Impressum</a>
+        </nav>
+        <button class="md:hidden text-2xl">
+          <i class="fas fa-bars"></i>
+        </button>
       </div>
     </div>
-  </div>
-</section>
+  </header>
 
-{#if isBookingFormVisible}
-  <div
-    on:click={hideBookingForm}
-    class="backgroundBuchungAktiv fixed inset-0 flex justify-center items-center z-40"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div on:click|stopPropagation class="relative bg-white rounded-xl shadow-lg p-8 m-4 max-w-lg w-full z-50">
-      <h3 class="text-2xl font-bold text-gray-800 mb-6">Buchung abschließen</h3>
-      {#if selectedDate}
-        <p class="text-gray-700 mb-4">
-          Ausgewähltes Datum: <span class="font-semibold">{selectedDate.toLocaleDateString('de-DE')}</span>
+ <section class="py-40 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="container mx-auto p-6 md:p-10 rounded-lg my-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6 border-b-2 pb-2">Impressum</h1>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Angaben gemäß § 5 TMG:</h2>
+        <p class="text-gray-600">
+            <strong>[Dein vollständiger Name / Name deines Unternehmens]</strong><br>
+            [Deine Straße und Hausnummer]<br>
+            [Deine Postleitzahl und Ort]<br>
+            [Dein Land]
         </p>
-      {/if}
+    </section>
 
-      {#if bookingFormError}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong class="font-bold">Fehler!</strong>
-          <span class="block sm:inline">{bookingFormError}</span>
-        </div>
-      {/if}
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Kontakt:</h2>
+        <p class="text-gray-600">
+            Telefon: <a href="tel:[Deine Telefonnummer (optional)]" class="text-blue-600 hover:underline">[Deine Telefonnummer (optional)]</a><br>
+            E-Mail: <a href="mailto:[Deine E-Mail-Adresse]" class="text-blue-600 hover:underline">[Deine E-Mail-Adresse]</a><br>
+            Website: <a href="[Deine Website-Adresse]" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">[Deine Website-Adresse]</a>
+        </p>
+    </section>
 
-      <form on:submit|preventDefault={addBooking}>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="time">Uhrzeit</label>
-          <select
-            id="time"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingTime}
-          >
-            {#each availableTimes as time}
-              <option value={time}>{time}</option>
-            {/each}
-          </select>
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="name">Vollständiger Name</label>
-          <input
-            type="text"
-            id="name"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingName}
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="email">E-Mail</label>
-          <input
-            type="email"
-            id="email"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingEmail}
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2" for="phone">Telefonnummer</label>
-          <input
-            type="tel"
-            id="phone"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            bind:value={newBookingPhone}
-            required
-          />
-        </div>
-        <div class="flex justify-between mt-6">
-          <button
-            type="button"
-            on:click={hideBookingForm}
-            class="px-4 py-2 text-gray-600 hover:text-indigo-700"
-          >
-            Zurück
-          </button>
-          <button
-            type="submit"
-            class="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition"
-          >
-            Buchung bestätigen
-          </button>
-        </div>
-      </form>
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Vertreten durch (falls zutreffend):</h2>
+        <p class="text-gray-600">
+            [Vorname Nachname des Geschäftsführers / Vorstandes / Vertretungsberechtigten]
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Registereintrag (falls zutreffend):</h2>
+        <p class="text-gray-600">
+            Amtsgericht: [Zuständiges Amtsgericht]<br>
+            Registernummer: [Deine Registernummer, z.B. HRB XXXX]
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG (falls zutreffend):</h2>
+        <p class="text-gray-600">
+            [Deine USt-IdNr.]
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Wirtschafts-Identifikationsnummer gemäß § 139c AO (falls zutreffend):</h2>
+        <p class="text-gray-600">
+            [Deine Wirtschafts-Identifikationsnummer]
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Inhaltlich Verantwortlicher gemäß § 55 Abs. 2 RStV (falls abweichend):</h2>
+        <p class="text-gray-600">
+            [Vorname Nachname des inhaltlich Verantwortlichen]<br>
+            [Straße und Hausnummer des inhaltlich Verantwortlichen]<br>
+            [Postleitzahl und Ort des inhaltlich Verantwortlichen]
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Berufsbezeichnung und kammerrechtliche Angaben (falls zutreffend):</h2>
+        <p class="text-gray-600">
+            Berufsbezeichnung: [Deine Berufsbezeichnung]<br>
+            Zuständige Kammer: [Name der zuständigen Kammer]<br>
+            Verliehen in: [Land, in dem die Berufsbezeichnung verliehen wurde]<br>
+            Es gelten folgende berufsrechtliche Regelungen: [Liste der relevanten berufsrechtlichen Regelungen]<br>
+            Diese können eingesehen werden unter: <a href="[Link zu den berufsrechtlichen Regelungen]" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">[Link zu den berufsrechtlichen Regelungen]</a>
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Streitschlichtung:</h2>
+        <p class="text-gray-600 mb-2">
+            Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit, die du unter <a href="http://ec.europa.eu/consumers/odr/" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">http://ec.europa.eu/consumers/odr/</a> findest.
+        </p>
+        <p class="text-gray-600">
+            Wir sind weder bereit noch verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Haftung für Inhalte:</h2>
+        <p class="text-gray-600">
+            Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+        </p>
+        <p class="text-gray-600 mt-2">
+            Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.
+        </p>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Haftung für Links:</h2>
+        <p class="text-gray-600">
+            Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte waren zum Zeitpunkt der Verlinkung nicht erkennbar.
+        </p>
+        <p class="text-gray-600 mt-2">
+            Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte einer Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links umgehend entfernen.
+        </p>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-semibold text-gray-700 mb-3">Urheberrecht:</h2>
+        <p class="text-gray-600">
+            Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers. Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.
+        </p>
+        <p class="text-gray-600 mt-2">
+            Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte Dritter beachtet. Insbesondere werden Inhalte Dritter als solche gekennzeichnet. Solltest du trotzdem auf eine Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden Hinweis. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.
+        </p>
+    </section>
+</div>
     </div>
-  </div>
-{/if}
-{#if showSuccessAnimation}
-  <div class="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl bg-green-500 text-white fade-in-out">
-    {animationMessage}
-  </div>
-{/if}
-{#if showFailureAnimation}
-  <div class="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl bg-red-500 text-white fade-in-out">
-    {animationMessage}
-  </div>
-{/if}
+  </section>
 
 
-    <section class="py-40 bg-gray-100">
-        </section>
+   <section class="py-40 bg-gray-50">
+    <div class="container mx-auto px-4">
+      
+    </div>
+  </section>
 
-    <footer class="bg-gray-900 text-white py-12">
-        </footer>
+  <footer class="bg-gray-800 text-white py-12">
+    <!--<div class="container mx-auto px-4">
+      <div class="grid md:grid-cols-4 gap-8">
+        <div>
+          <h4 class="text-xl font-heading font-bold mb-4">Zen Shiatsu</h4>
+          <p class="text-gray-400">Restoring balance through traditional Japanese healing techniques.</p>
+        </div>
+        <div>
+          <h4 class="text-lg font-heading font-semibold mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Home</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Book Appointment</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Services</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">About Us</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-lg font-heading font-semibold mb-4">Contact</h4>
+          <ul class="space-y-2">
+            <li class="flex items-center">
+              <i class="fas fa-map-marker-alt mr-2 text-teal-400"></i>
+              <span class="text-gray-400">123 Healing Way, Serenity City</span>
+            </li>
+            <li class="flex items-center">
+              <i class="fas fa-phone mr-2 text-teal-400"></i>
+              <span class="text-gray-400">(555) 123-4567</span>
+            </li>
+            <li class="flex items-center">
+              <i class="fas fa-envelope mr-2 text-teal-400"></i>
+              <span class="text-gray-400">contact@zenshiatsu.com</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-lg font-heading font-semibold mb-4">Follow Us</h4>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white transition text-xl">
+              <i class="fab fa-facebook"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition text-xl">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition text-xl">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </div>
+          <p class="mt-4 text-gray-400 text-sm">© 2023 Zen Shiatsu. All rights reserved.</p>
+        </div>
+      </div>
+    </div>-->
+  </footer>
+</div>
 
 <style>
+	.flower{
+		height: 30vh;
+	}
   .backgroundBuchungAktiv {
     background-color: rgba(0, 0, 0, 0.4);
   }
@@ -512,20 +466,19 @@
       transform: translateX(100%);
     }
   }
-        .calendar-day:hover:not(.disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .time-slot:hover:not(.booked) {
-            background-color: #3b82f6;
-            color: white;
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  .calendar-day:hover:not(.disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .time-slot:hover:not(.booked) {
+    background-color: #2dd4bf; /* Tailwind teal-400 */
+    color: white;
+  }
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

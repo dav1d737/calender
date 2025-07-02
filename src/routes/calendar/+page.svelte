@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Flower from "../flower/+page.svelte";
+  import Flower from "../slider/+page.svelte";
 
   interface Termin {
     id: number;
